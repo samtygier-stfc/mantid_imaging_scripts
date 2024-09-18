@@ -37,6 +37,10 @@ def main() -> None:
     sample_spec = get_spectrum(sample)
     sample_cor_mi_spec = get_spectrum(sample_cor_mi)
 
+    if args.compare:
+        sample_compare = load_stack(args.sample / args.compare)
+        sample_compare_spec = get_spectrum(sample_compare)
+
     if args.open:
         shutters_open = get_shutters(args.open)
         with ExecutionTimer(msg="load_stack Open Beam"):
@@ -59,6 +63,8 @@ def main() -> None:
     ax1.set_title("Sample")
     ax1.plot(sample_spec, label="uncorrected")
     ax1.plot(sample_cor_mi_spec, label="corrected (MI)")
+    if args.compare:
+        ax1.plot(sample_compare_spec, label="compare")
     #ax1.plot(sample_cor_spec, label="corrected")
     ax1.legend()
 
@@ -170,6 +176,7 @@ class ArgType(argparse.Namespace):
     sample: Path
     open: Path | None
     output: str
+    compare: str | None
 
 
 def get_args() -> ArgType:
@@ -177,6 +184,7 @@ def get_args() -> ArgType:
     parser.add_argument("--sample", type=Path, help="Sample directory", required=True)
     parser.add_argument("--open", type=Path, help="Open beam directory")
     parser.add_argument("--output", type=str, help="Output directory", default="corrected_mi")
+    parser.add_argument("--compare", type=str, help="Compare directory")
     return parser.parse_args(namespace=ArgType())
 
 

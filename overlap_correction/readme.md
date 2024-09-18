@@ -14,3 +14,5 @@ The script can also be run with an open beam stack.
 python overlap_correction/overlap_correction.py --sample /data/fe_calib/fe_sample --open /data/fe_calib/fe_flat
 ```
 In this case a normalised plot will be shown.
+
+To compare with an existing correct subdirectoy add `--compare Corrected`.
