@@ -2,6 +2,7 @@
 # SPDX - License - Identifier: GPL-3.0-or-later
 from __future__ import annotations
 import argparse
+import concurrent.futures
 import logging
 import sys
 from dataclasses import dataclass
@@ -28,7 +29,7 @@ def main() -> None:
     with ExecutionTimer(msg="load_stack Sample"):
         sample = load_stack(args.sample)
     with ExecutionTimer(msg="quick_overlap Sample"):
-        sample_cor_mi = ImageStack(quick_overlap(sample.data, shutters))
+        sample_cor_mi = ImageStack(quick_overlap_p1(sample.data, shutters))
     with ExecutionTimer(msg="save_stack Sample"):
         name_prefix, out_format = get_save_params(args, sample.filenames)
         save_path = args.sample / args.output
@@ -99,7 +100,7 @@ def load_stack(path: Path) -> ImageStack:
     filename_group = FilenameGroup.from_file(Path(fname))
     filename_group.find_all_files()
     image_stack = loader.load(filename_group)
-    print(f"Loaded: {image_stack.data.shape}")
+    print(f"Loaded: {image_stack.data.shape} {image_stack.data.dtype}")
     return image_stack
 
 
@@ -119,6 +120,23 @@ def quick_overlap(raw_data: numpy.ndarray, shutters: list[ShutterInfo]) -> numpy
     #print(f"{prob_occupied.max()=}")
     #print(f"{prob_occupied[0]=}")
     corrected = raw_data / (1 - prob_occupied)
+    return corrected
+
+
+def quick_overlap_p1(raw_data: numpy.ndarray, shutters: list[ShutterInfo]) -> numpy.ndarray:
+    corrected = numpy.empty_like(raw_data, dtype=numpy.float32)
+
+    def _do_work(raw_data, corrected, shutter):
+        ss, se = shutter.start_index, shutter.end_index
+        prob_occupied = numpy.cumsum(raw_data[ss:se - 1], axis=0, dtype=numpy.float32) / shutter.count
+        corrected[shutter.start_index] = raw_data[shutter.start_index]
+        local_corrected = raw_data[ss + 1:se] / (1 - prob_occupied)
+        corrected[ss + 1:se] = local_corrected
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        for shutter in shutters:
+            executor.submit(_do_work, raw_data, corrected, shutter)
+
     return corrected
 
 
