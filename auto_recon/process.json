@@ -1,0 +1,41 @@
+{
+    "dataset_dir": "/data/imaging/IMAT00010675_128/Tomo",
+    "pixel_size": 30,
+    "operation_history": [
+        {
+            "name": "OutliersFilter",
+            "kwargs": {
+                "diff": 1000.0,
+                "radius": 3,
+                "mode": "bright"
+            },
+            "display_name": "Remove Outliers"
+        },
+        {
+            "name": "FlatFieldFilter",
+            "kwargs": {
+                "selected_flat_fielding": "Only Before",
+                "use_dark": false
+            },
+            "display_name": "Flat-fielding"
+        },
+        {
+            "name": "AstraRecon.full",
+            "kwargs": {
+                "algorithm": "FBP_CUDA",
+                "filter_name": "ram-lak",
+                "num_iter": 1,
+                "cor": 64.0,
+                "tilt": 0.0,
+                "pixel_size": 0.0,
+                "alpha": 1.0,
+                "gamma": 1,
+                "stochastic": false,
+                "projections_per_subset": 50,
+                "regularisation_percent": 30,
+                "regulariser": "TV"
+            },
+            "display_name": "Volume Reconstruction"
+        }
+    ]
+}
